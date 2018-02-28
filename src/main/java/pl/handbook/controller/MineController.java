@@ -1,7 +1,16 @@
 package pl.handbook.controller;
 
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -12,10 +21,9 @@ import pl.handbook.entity.TypeOfMine;
 import pl.handbook.repository.MineRepository;
 import pl.handbook.repository.TypeOfMineRepository;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.util.List;
 import java.util.UUID;
 
@@ -108,27 +116,27 @@ public class MineController {
         return "one_mine_view";
     }
 
-    public void uploadFile(MultipartFile file, Mine mine) {
-        if (!file.isEmpty()) {
-            try {
-                UUID uuid = UUID.randomUUID();
-                String fileName = "/home/grzegorz/IdeaProjects/SappersHandbook/src/main/resources/tempPhoto/" + uuid.toString();
-                byte[] bytes = file.getBytes();
-                File isFile = new File(fileName);
-                isFile.createNewFile();
-                BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(isFile));
-                stream.write(bytes);
-                stream.close();
-                mine.setPhoto("http://localhost:8080/tempPhoto/img_" + uuid.toString() );
-                mineRepository.save(mine);
-            } catch (Exception e) {
-                e.printStackTrace();
-                mineRepository.save(mine);
-            }
-        }
-    }
-
-
+//    public void uploadFile(MultipartFile file, Mine mine) {
+//        if (!file.isEmpty()) {
+//            try {
+//                UUID uuid = UUID.randomUUID();
+//                String fileName = "/home/grzegorz/IdeaProjects/SappersHandbook/src/main/resources/tempPhoto/" + uuid.toString();
+//                byte[] bytes = file.getBytes();
+//                File isFile = new File(fileName);
+//                isFile.createNewFile();
+//                BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(isFile));
+//                stream.write(bytes);
+//                stream.close();
+//                mine.setPhoto("http://localhost:8080/tempPhoto/img_" + uuid.toString());
+//                mineRepository.save(mine);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                mineRepository.save(mine);
+//            }
+//        }
+//    }
+//
+//}
 //    public void pobierz(Mine mine, HttpServletResponse response) throws IOException {
 //        //    byte[] bytes = mine.getData(); //pobierz na podstawie id
 //        FileInputStream inputStream = new FileInputStream(mine.getPhoto());
@@ -144,27 +152,43 @@ public class MineController {
 //        outStream.close();
 //    }
 
+    String accessKey = "";
+    String secretKey = "";
 
-//    public void uploadFile(MultipartFile file, Mine mine) {
-//        if (!file.isEmpty()) {
-//            try {
-//                UUID uuid = UUID.randomUUID();
-//                String fileName = uuid.toString();
-//                String bucektName = "sapperhandbook";
-//                String accessKey = "AKIAIZCHST7HC6HZ2KEA";
-//                String secretKey = "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";
-//                byte[] bytes = file.getBytes();
-//                InputStream is = new ByteArrayInputStream(bytes);
-//                AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
-//                AmazonS3Client s3Client = new AmazonS3Client(credentials);
-//                s3Client.putObject(new PutObjectRequest(bucektName, fileName, is, new ObjectMetadata()));
-//                mine.setPhoto(uuid.toString());
-//                mineRepository.save(mine);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                mineRepository.save(mine);
-//            }
-//        }
-//
-//    }
+    public void uploadFile(MultipartFile file, Mine mine) {
+        if (!file.isEmpty()) {
+            try {
+                UUID uuid = UUID.randomUUID();
+                String fileName = uuid.toString();
+                String bucketName = "sapperhandbook";
+                byte[] bytes = file.getBytes();
+                InputStream is = new ByteArrayInputStream(bytes);
+                AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
+                AmazonS3Client s3Client = new AmazonS3Client(credentials);
+                s3Client.putObject(new PutObjectRequest(bucketName, fileName, is, new ObjectMetadata()));
+                mine.setPhoto(uuid.toString());
+                mineRepository.save(mine);
+            } catch (Exception e) {
+                e.printStackTrace();
+                mineRepository.save(mine);
+            }
+        }
+
+    }
+
+
+    public void getFile(Mine mine, HttpServletResponse response) {
+        try {
+            String bucketName = "sapperhandbook";
+            AmazonS3 s3Client = new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey));
+            S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, mine.getPhoto()));
+            InputStream is = object.getObjectContent();
+            org.apache.commons.io.IOUtils.copy(is, response.getOutputStream());
+            response.flushBuffer();
+        } catch (IOException ex) {
+            response.setStatus(404);
+        }
+    }
+
+
 }

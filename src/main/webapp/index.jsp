@@ -22,4 +22,6 @@
 <c:forEach items="${wynik}" var="wynik">
     ${wynik}
 </c:forEach>
+
+<img src="https://s3-eu-west-1.amazonaws.com/sapperhandbook/8997b965-34a2-41bf-b221-3c7c25176e22">
 </html>

@@ -25,7 +25,7 @@ import javax.validation.Validator;
 
 @Configuration
 @EnableWebMvc
-@ComponentScan(basePackages = "pl.handbook")
+@ComponentScan(basePackages = "pl")
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = "pl.handbook")
 public class AppConfig extends WebMvcConfigurerAdapter {

@@ -26,16 +26,6 @@ public class Mine {
     private Double diametrOfMine;
     private String body;
     private String explosiveMaterial;
-    private byte[] data;
-
-
-    public byte[] getData() {
-        return data;
-    }
-
-    public void setData(byte[] data) {
-        this.data = data;
-    }
 
     public String getBody() {
         return body;
